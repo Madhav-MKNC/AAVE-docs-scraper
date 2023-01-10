@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Title:    AAVE's Docs Scraper
-# Author:   MKNC
+# Author:   MKNC (https://github.com/Madhav-MKNC)
 # created:  10-01-2023 19:30 IST
 
 # imports
