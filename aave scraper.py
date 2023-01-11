@@ -1,83 +1,88 @@
 #!/usr/bin/env python3
-# Title:    AAVE's Docs Scraper
-# Author:   MKNC (https://github.com/Madhav-MKNC)
-# created:  10-01-2023 19:30 IST
 
-# imports
-import os
-from platform import uname
+# Title:    AAVE's Docs Scraper
+# Author:   MKNC
+# created:  10-01-2023 19:30 IST
+# version 1
+
+# requests      --> for scraping html data from an url
+# BeautifulSoup --> for parsing the html data in a tree like structure
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+import os
+from platform import uname
+def clearScreen():
+    os.system('cls' if 'win' in uname().system.lower() else 'clear')
+
+# for saving the data
+def saveData(fname, data):
+    with open(fname,'w',encoding="utf-8") as file:
+        file.write(str(fname))
+
 # scraping links
 def get_paths(url):
-    # url = "https://docs.aave.com/hub/"
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
-    urls = []
+
+    """
+    SOMETHING HERE TO CHANGE
+    """
+    # root_url = '/'.join(url.split('/')[0:3])+'/'
+    root_url = url
+    urls = [url]
     for link in soup.find_all('a'):
         path = link.get('href')
-        if not path.startswith('/'):
+        if path.startswith('/'):
             path = urljoin(url,path)
-        if path.startswith('https://docs.aave.com/') and '#' not in path: 
+        if path.startswith(root_url) and '#' not in path: 
             urls.append(path)
+
     return list(set(urls))
 
 # page content
-def fetch_data(url,content_class,write_to_file=True,dirName='data'):
-    response = requests.get(url)
-    data = BeautifulSoup(response.text, 'html.parser')
-    title = data.find('title').text
-    data = data.find_all(class_=content_class)[1:]      # skips the first element
+def fetch_data(url, content_class, dirName):
+    try:
+        print("[+] Scraping",url)
+        response = requests.get(url)
+        data = BeautifulSoup(response.text, 'html.parser')
+        title = data.find('title').text
+        data = data.find_all(class_=content_class)[1:]      # skips the first element
+    except Exception as e:
+        print("[!] Failed to fetch",url)
+        print("[ERROR:]",e)
+        return
 
+    # saving data
+    fileName = f"{dirName}/{title}.txt"
     content = f"[{title}]\n"
     content += f"[{url}]]\n"
     for i in data:
         content+='\n'+i.text.strip()+'\n'
-
-    if write_to_file:
-        fileName = f"{dirName}/{title}.txt"
-        with open(fileName,'w',encoding="utf-8") as file:
-            file.write(str(content))
-    else: print(content)
-    return content
+    saveData(fileName, content)
 
 if __name__ == "__main__":
-    os.system('cls' if 'win' in uname().system.lower() else 'clear')
+    clearScreen()
     print("AAVE's Docs Scraper\n")
     print("[+] Data will saved in 'data/' in the currect directory")
+
     if os.path.exists('data'): 
         print("[-] 'data/' directory already Exists, saving all the data here")
     else:
         print("[+] Creating directory 'data/'")
         os.mkdir('data')
     
+    # input
     data_class = "css-175oi2r r-bnwqim"
-    url = "https://docs.aave.com/hub/"
-    fetch_data(url,data_class,write_to_file=True,dirName='data')
+    url = "https://docs.aave.com/"
 
-    print(f"[+] Scraping all the links found on - {url}\n")
+    # output
     try:
-        for url in get_paths(url):
-            try:
-                print("[+] Scraping",url)
-                fetch_data(url, data_class, write_to_file=True,dirName='data')
-            except Exception as e:
-                print("[!] Failed to fetch",url)
-                print("[=]",e)
+        for path in get_paths(url):
+            fetch_data(path)
     except KeyboardInterrupt:
         print("[-] KeyBoard interrupted")
         print("[-] Exiting...")
 
-
-
-
-
-"""
-# # ignore this
-chapters_class = "css-1rynq56 r-1ro0kt6 r-16y2uox r-1wbh5a2 r-oyd9sg r-gg6oyi r-1b43r93 r-16dba41 r-hbpseb r-1bnj018"
-headings_class = "css-1rynq56 r-1nf4jbm r-fdjqy7 r-1xnzce8"
-only_data_class = "css-1rynq56 r-gg6oyi r-ubezar r-16dba41 r-135wba7 r-1nf4jbm r-fdjqy7 r-1xnzce8"
-heading_data_class = "r-fdjqy7"
-"""
+        
