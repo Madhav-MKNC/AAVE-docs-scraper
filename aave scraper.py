@@ -22,27 +22,22 @@ def saveData(fname, data):
         file.write(str(fname))
 
 # scraping links
-def get_paths(url):
+def get_paths(domain, url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    """
-    SOMETHING HERE TO CHANGE
-    """
-    # root_url = '/'.join(url.split('/')[0:3])+'/'
-    root_url = url
     urls = [url]
     for link in soup.find_all('a'):
         path = link.get('href')
         if path.startswith('/'):
             path = urljoin(url,path)
-        if path.startswith(root_url) and '#' not in path: 
+        if path.startswith(domain) and '#' not in path: 
             urls.append(path)
 
     return list(set(urls))
 
 # page content
-def fetch_data(url, content_class, dirName):
+def fetch_data(url, content_class, dirName='data'):
     try:
         print("[+] Scraping",url)
         response = requests.get(url)
@@ -75,14 +70,14 @@ if __name__ == "__main__":
     
     # input
     data_class = "css-175oi2r r-bnwqim"
-    url = "https://docs.aave.com/"
-
+    url = "https://docs.aave.com/hub/"
+    domain = '/'.join(url.split('/')[0:3])+'/'
+    
     # output
     try:
-        for path in get_paths(url):
-            fetch_data(path)
+        for path in get_paths(domain=domain, url=url):
+            fetch_data(path, content_class=data_class, dirName='data')
     except KeyboardInterrupt:
         print("[-] KeyBoard interrupted")
         print("[-] Exiting...")
 
-        
