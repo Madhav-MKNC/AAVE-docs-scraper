@@ -19,7 +19,7 @@ def clearScreen():
 # for saving the data
 def saveData(fname, data):
     with open(fname,'w',encoding="utf-8") as file:
-        file.write(str(fname))
+        file.write(str(data))
 
 # scraping links
 def get_paths(domain, url):
