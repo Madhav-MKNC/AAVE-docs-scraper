@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 # Title:    AAVE's Docs Scraper
 # Author:   MKNC
 # created:  10-01-2023 19:30 IST
@@ -18,15 +17,24 @@ def printScreen():
     os.system('cls' if 'win' in uname().system.lower() else 'clear')
     print("<"+"="*50+" AAVE's Docs Scraper "+"="*50+">\n")
 
-from time import time 
+# for unique directory names
+def get_dirname(dname):
+    if os.path.exists(dname):
+        print(dname)
+        dname += "1"
+        print(dname)
+        return get_dirname(dname)
+    return dname
+
 def makeDir(dname):
-    now = str(int(time()))
-    if os.path.exists(dname): 
-        print(f"[-] '{dname}/' directory already Exists, creating and saving all the data in '{dname} {now}/' directory")
-        dname = f"{dname} {now}"
-    else:
-        print(f"[+] Creating directory '{dname}'")
     os.mkdir(dname)
+    # if os.path.exists(dname): 
+    #     new_dname = get_dirname(dname)
+    #     print(f"[-] '{dname}/' directory already Exists, creating and saving all the data in '{new_dname}/' directory")
+    #     os.mkdir(new_dname)
+    # else:
+    #     print(f"[+] Creating directory '{dname}'")
+    #     os.mkdir(dname)
 
 # for saving the data
 def saveData(fname, data):
@@ -40,7 +48,6 @@ class Crawler:
         self.links_found = []
         self.restricted_domain = restricted_domain
         self.crawl_limit = crawl_limit
-        self.index = 1
 
     def fetch_all_links(self, url):
         response = requests.get(url)
@@ -62,7 +69,7 @@ class Crawler:
     def crawl(self):
         while self.urls:
             url = self.urls.pop(0)
-            print("\n[+] Crawling:",url)
+            print(f"[+] Crawling: {url}\n")
             try:
                 self.fetch_all_links(url)
             except Exception as e:
@@ -70,24 +77,28 @@ class Crawler:
                 print("[!] REASON:",e,'\n')
 
 # page content
-def fetch_data(self, url, content_class, dirName='.'):
+index = 0
+def fetch_data(url, content_class, dirName='.'):
+    global index
     try:
-        print(f"[{self.index}] Scraping",url)
-        self.index += 1
+        print(f"[{index}] Scraping {url}")
+        index += 1
         response = requests.get(url)
         data = BeautifulSoup(response.text, 'html.parser')
         # title = data.find('title').text     # for filename = title of page
         data = data.find_all(class_=content_class)[1:]      # skips the first element
     except Exception as e:
         print("[!] Failed to fetch",url)
-        print("[ERROR:]",e)
+        print("[ERROR]",e)
         return
 
-    # saving data
+    # title => filename
     title = urlparse(url).path[1:-1].replace('/','-')
     fileName = f"{dirName}/{title}.txt"
+
+    # data -> file
     content = f"[{title}]\n"
-    content += f"[{url}]]\n"
+    content += f"[{url}]\n"
     for i in data:
         content += '\n'+i.text.strip()+'\n'
     saveData(fileName, content)
@@ -101,7 +112,6 @@ def scrape_all(url, content_class, dirName, crawl_limit):
 
     for path in aave.links_found:
         try:
-            print("[+] Scraping",path)
             fetch_data(path, content_class,dirName)
         except Exception as e:
             print("[!] Failed to fetch",path)
@@ -112,14 +122,14 @@ def scrape_all(url, content_class, dirName, crawl_limit):
 if __name__ == "__main__":
     printScreen()
     
-    root_dir = input("[=] Enter a root directory name: ")
-    print(f"[+] Data will saved in '{root_dir}' in the currect directory")
+    root_dir = input("[=] create a directory in currect directory for saving all the data: ")
+    root_dir = get_dirname(root_dir)
     makeDir(root_dir)
 
     url = "https://docs.aave.com/"
     ## UPDATE THIS VALUE IF NO DATA IS FETCHED
     # it might be possible that the website developers may have changed the content class or maybe just modified
-    data_class = "css-175oi2r r-bnwqim"
+    data_class = "r-1xnzce8"
 
     crawl_limit = input("[=] Enter a crawl limit: ")
     if not crawl_limit.isnumeric():
